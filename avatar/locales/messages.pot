@@ -1,0 +1,48 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: mr42-cogs\n"
+"POT-Creation-Date: 2023-10-20 20:46+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: redgettext 3.4.2\n"
+
+#: avatar/avatar.py:13
+#, docstring
+msgid "Get a user's avatar."
+msgstr ""
+
+#: avatar/avatar.py:17
+#, docstring
+msgid ""
+"Returns a user's avatar as attachment.\n"
+"\n"
+"\t\tUser argument can be user mention, nickname, username, user ID.\n"
+"\n"
+"\t\tDefaults to requester when no argument is supplied."
+msgstr ""
+
+#: avatar/avatar.py:23 avatar/avatar.py:50
+msgid "{author} requested the avatar of {name}."
+msgstr ""
+
+#: avatar/avatar.py:25 avatar/avatar.py:52
+msgid "Here is your avatar, {author}."
+msgstr ""
+
+#: avatar/avatar.py:27 avatar/avatar.py:54
+msgid "This is _my_ avatar, {author}!"
+msgstr ""
+
+#: avatar/avatar.py:29
+msgid "You requested the avatar of {name}."
+msgstr ""
+
+#: avatar/avatar.py:38 avatar/avatar.py:62
+msgid ""
+"I do not have permission to attach files or embed links in this channel."
+msgstr ""

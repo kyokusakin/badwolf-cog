@@ -1,0 +1,250 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: trusty-cogs\n"
+"POT-Creation-Date: 2022-04-18 21:23+0000\n"
+"PO-Revision-Date: 2023-05-10 16:10\n"
+"Last-Translator: \n"
+"Language-Team: Traditional Chinese\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: redgettext 3.4.2\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Crowdin-Project: trusty-cogs\n"
+"X-Crowdin-Project-ID: 510866\n"
+"X-Crowdin-Language: zh_TW\n"
+"X-Crowdin-File: /dpy-2.0/inviteblocklist/locales/messages.pot\n"
+"X-Crowdin-File-ID: 482\n"
+"Language: zh_TW\n"
+
+#: inviteblocklist/inviteblocklist.py:196
+#: inviteblocklist/inviteblocklist.py:214
+#: inviteblocklist/inviteblocklist.py:236
+msgid "I tried to delete an invite link posted in {guild} but lacked the permission to do so"
+msgstr "我嘗試刪除在 {guild} 發布的邀請鏈接，但是我沒有權限這樣做"
+
+#: inviteblocklist/inviteblocklist.py:247
+#, docstring
+msgid "\n"
+"        Settings for managing invite link blocking\n"
+"        "
+msgstr "\n"
+"        管理邀請鏈接阻擋的設置\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:254
+#: inviteblocklist/inviteblocklist.py:261
+#, docstring
+msgid "\n"
+"        Commands for setting the blocklist\n"
+"        "
+msgstr "\n"
+"        設置封鎖列表的命令\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:268
+#, docstring
+msgid "\n"
+"        Commands for fine tuning allowed channels, users, or roles\n"
+"        "
+msgstr "\n"
+"        微調允許通道、用戶或角色的命令\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:286
+#, docstring
+msgid "\n"
+"        Automatically remove all invites regardless of their destination\n"
+"        "
+msgstr "\n"
+"        自動刪除所有邀請，無論其目的地如何\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:290
+msgid "Okay, I will delete all invite links posted."
+msgstr "好的，我將刪除所有發布的邀請鏈接。"
+
+#: inviteblocklist/inviteblocklist.py:263
+msgid "Okay I will only delete invites if the server destination is in my blocklist or allowlist."
+msgstr "好的，我僅會在伺服器目的地位於我的阻擋清單刪除邀請。"
+
+#: inviteblocklist/inviteblocklist.py:306
+#, docstring
+msgid "\n"
+"        Add a guild ID to the blocklist, providing an invite link will also work\n\n"
+"        `[invite_or_guild_id]` The guild ID or invite to the guild you want to have\n"
+"        invite links blocked from.\n"
+"        "
+msgstr "\n"
+"        將伺服器 ID 添加到封鎖列表中，提供邀請鏈接也將起作用\n\n"
+"        `[invite_or_guild_id]` 您希望將邀請鏈接阻擋的伺服器 ID 或邀請。\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:328
+msgid "Now blocking invites from {guild}."
+msgstr "現在阻止來自 {guild} 的邀請。"
+
+#: inviteblocklist/inviteblocklist.py:331
+msgid "None of the provided invite links or guild ID's are new."
+msgstr "提供的邀請鏈接或伺服器 ID 均不是新的。"
+
+#: inviteblocklist/inviteblocklist.py:340
+#, docstring
+msgid "\n"
+"        Add a guild ID to the blocklist, providing an invite link will also work\n\n"
+"        `[invite_or_guild_id]` The guild ID or invite to the guild you not longer want to have\n"
+"        invite links blocked from.\n"
+"        "
+msgstr "\n"
+"        將伺服器 ID 添加到封鎖列表中，提供邀請鏈接也將起作用\n\n"
+"        `[invite_or_guild_id]` 您不再希望將邀請鏈接阻擋的伺服器 ID 或邀請。\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:362
+msgid "Removed {guild} from blocklist."
+msgstr "從封鎖列表中刪除了 {guild}。"
+
+#: inviteblocklist/inviteblocklist.py:365
+msgid "None of the provided invite links or guild ID's are being blocked."
+msgstr "提供的邀請鏈接或伺服器 ID 均未被阻擋。"
+
+#: inviteblocklist/inviteblocklist.py:370
+#, docstring
+msgid "\n"
+"        Show what guild ID's are in the invite link blocklist\n"
+"        "
+msgstr "\n"
+"        顯示在邀請鏈接封鎖列表中的伺服器 ID\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:373
+msgid "__Guild ID's Blocked__:\n"
+"{guilds}"
+msgstr "__被封鎖的伺服器 ID__：\n{guilds}"
+
+#: inviteblocklist/inviteblocklist.py:378
+msgid "__Blocked Channels, Users, and Roles:__\n"
+"{chan_user_roel}"
+msgstr "__被封鎖的通道、用戶和角色__：\n{chan_user_roel}"
+
+#: inviteblocklist/inviteblocklist.py:397
+#, docstring
+msgid "\n"
+"        Add a guild ID to the allowlist, providing an invite link will also work\n\n"
+"        `[invite_or_guild_id]` The guild ID or invite to the guild you want to have\n"
+"        invites allowed from.\n"
+"        "
+msgstr "\n"
+"        將伺服器 ID 添加到允許列表中，提供邀請鏈接也將起作用\n\n"
+"        `[invite_or_guild_id]` 您希望從中允許邀請的伺服器 ID 或邀請。\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:419
+msgid "Now Allowing invites from {guild}."
+msgstr "現在允許來自 {guild} 的邀請。"
+
+#: inviteblocklist/inviteblocklist.py:384
+msgid "None of the provided invite links or ID's are new."
+msgstr "提供的邀請鏈接不存在或ID不是新的。"
+
+#: inviteblocklist/inviteblocklist.py:431
+#, docstring
+msgid "\n"
+"        Add a guild ID to the allowlist, providing an invite link will also work\n\n"
+"        `[invite_or_guild_id]` The guild ID or invite to the guild you not longer want to have\n"
+"        invites allowed from.\n"
+"        "
+msgstr "\n"
+"        將伺服器 ID 添加到允許列表中，提供邀請鏈接也將起作用\n\n"
+"        `[invite_or_guild_id]` 您不再希望從中允許邀請的伺服器 ID 或邀請。\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:453
+msgid "Removed {guild} from allowlist."
+msgstr "從允許列表中刪除了 {guild}。"
+
+#: inviteblocklist/inviteblocklist.py:457
+msgid "None of the provided invite links or guild ID's are currently allowed."
+msgstr "提供的邀請鏈接或伺服器 ID 目前均未被允許。"
+
+#: inviteblocklist/inviteblocklist.py:463
+#, docstring
+msgid "\n"
+"        Show what guild ID's are in the invite link allowlist\n"
+"        "
+msgstr "\n"
+"        顯示在邀請鏈接允許列表中的伺服器 ID\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:466
+msgid "__Guild ID's Allowed__:\n"
+"{guilds}"
+msgstr "__被允許的伺服器 ID__：\n{guilds}"
+
+#: inviteblocklist/inviteblocklist.py:471
+msgid "__Allowed Channels, Users, and Roles:__\n"
+"{chan_user_roel}"
+msgstr "__允許的通道、用戶和角色__：\n{chan_user_roel}"
+
+#: inviteblocklist/inviteblocklist.py:488
+#, docstring
+msgid "\n"
+"        Add a guild ID to the allowlist, providing an invite link will also work\n\n"
+"        `[channel_user_role...]` is the channel, user or role to whitelist\n"
+"        (You can supply more than one of any at a time)\n"
+"        "
+msgstr "\n"
+"        將伺服器 ID 添加到允許列表中，提供邀請鏈接也將起作用\n\n"
+"        `[channel_user_role...]` 是要加入白名單的通道、用戶或角色\n"
+"        (您可以同時提供多個)\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:495
+msgid "You must supply 1 or more channels users or roles to be allowed."
+msgstr "您必須提供 1 個或多個要允許的通道、用戶或角色。"
+
+#: inviteblocklist/inviteblocklist.py:501
+msgid "`{list_type}` added to the whitelist."
+msgstr "`{list_type}` 已添加到白名單中。"
+
+#: inviteblocklist/inviteblocklist.py:510
+#, docstring
+msgid "\n"
+"        Add a guild ID to the allowlist, providing an invite link will also work\n\n"
+"        `[channel_user_role...]` is the channel, user or role to remove from the whitelist\n"
+"        (You can supply more than one of any at a time)\n"
+"        "
+msgstr "\n"
+"        將伺服器 ID 添加到允許列表中，提供邀請鏈接也將起作用\n\n"
+"        `[channel_user_role...]` 是要從白名單中移除的通道、用戶或角色\n"
+"        (您可以同時提供多個)\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:517
+msgid "You must supply 1 or more channels users or roles to be whitelisted."
+msgstr "您必須提供 1 個或多個要加入白名單的通道、用戶或角色。"
+
+#: inviteblocklist/inviteblocklist.py:523
+msgid "`{list_type}` removed from the whitelist."
+msgstr "`{list_type}` 已從白名單中移除。"
+
+#: inviteblocklist/inviteblocklist.py:530
+#, docstring
+msgid "\n"
+"        Show what channels, users, and roles are in the invite link allowlist\n"
+"        "
+msgstr "\n"
+"        顯示邀請鏈接允許列表中的通道、用戶和角色\n"
+"        "
+
+#: inviteblocklist/inviteblocklist.py:532
+msgid "Invite immunity list for {guild}:\n"
+msgstr "{guild} 的邀請免疫列表：\n"
+
+#: inviteblocklist/inviteblocklist.py:556
+msgid "Staff role set to {role.mention}"
+msgstr "工作人員角色設置為{role.mention}"
+
+#: inviteblocklist/inviteblocklist.py:562
+msgid "Staff role has been removed."
+msgstr "工作人員角色已被移除"
