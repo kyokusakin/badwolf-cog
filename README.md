@@ -1,9 +1,5 @@
 # Badwolf_TW Cogs
 
-![Python 3.11]https://docs.python.org/3.11)
-![Discord.py](https://img.shields.io/badge/discord-py-blue?style=for-the-badge)
-![license](https://github.com/kyokusakin/badwolf-cog/blob/main/LICENSE)
-
 These are for [Red V3](https://github.com/Cog-Creators/Red-DiscordBot/), an open source self-hosted Discord bot. If this is your first time with Red,
 take a look at the [docs](https://docs.discord.red).
 
