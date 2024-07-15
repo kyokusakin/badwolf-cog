@@ -1,7 +1,8 @@
 {
     "author": [
         "RePulsR",
-        "TrustyJAID"
+        "TrustyJAID",
+        "Badwolf_TW"
     ],
     "description": "Log changes within the server using extended modlogs, an extension of RedBot cores modlog.",
     "disabled": false,
