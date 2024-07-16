@@ -27,7 +27,7 @@ There's a list of cogs below, or you can use `[p]cog list badwolf-cogs` if you'v
 
 ### License
 
-Cogs are under licensed MIT License. Please see the [LICENSE file](LICENSE).
+Cogs are under licensed GNU General Public License v3.0. Please see the [LICENSE file](LICENSE).
 
 
 ### Credits
