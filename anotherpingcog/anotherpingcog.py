@@ -27,8 +27,8 @@ DEFAULT_CONF = {
 }
 
 DEFAULT_FOOTER = (
-    "If the bot feels fast, don't worry about high numbers\nScale: Excellent | "
-    "Good | Alright | Bad | Very Bad"
+    "延遲分級: 極佳 | 良好 | 普通 | 差 | 極差"
+
 )
 
 LEFT_ARROW = "\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}"
@@ -188,26 +188,26 @@ class AnotherPingCog(commands.Cog):
         self, ws_latency: int, m_latency: int, settings: Cache, emojis: bool
     ) -> tuple[str, str]:
         if ws_latency < 50:
-            ws_latency_text = f"{settings.green.emoji} Excellent" if emojis else "Excellent"
+            ws_latency_text = f"{settings.green.emoji} 極佳" if emojis else "極佳"
         elif ws_latency < 150:
-            ws_latency_text = f"{settings.green.emoji} Good" if emojis else "Good"
+            ws_latency_text = f"{settings.green.emoji} 良好" if emojis else "良好"
         elif ws_latency < 250:
-            ws_latency_text = f"{settings.orange.emoji} Alright" if emojis else "Alright"
+            ws_latency_text = f"{settings.orange.emoji} 普通" if emojis else "普通"
         elif ws_latency < 500:
-            ws_latency_text = f"{settings.red.emoji} Bad" if emojis else "Bad"
+            ws_latency_text = f"{settings.red.emoji} 差" if emojis else "差"
         else:
-            ws_latency_text = f"{settings.red.emoji} Very Bad" if emojis else "Very Bad"
+            ws_latency_text = f"{settings.red.emoji} 極差" if emojis else "極差"
 
         if m_latency < 75:
-            m_latency_text = f"{settings.green.emoji} Excellent" if emojis else "Excellent"
+            m_latency_text = f"{settings.green.emoji} 極佳" if emojis else "極佳"
         elif m_latency < 225:
-            m_latency_text = f"{settings.green.emoji} Good" if emojis else "Good"
+            m_latency_text = f"{settings.green.emoji} 良好" if emojis else "良好"
         elif m_latency < 350:
-            m_latency_text = f"{settings.orange.emoji} Alright" if emojis else "Alright"
+            m_latency_text = f"{settings.orange.emoji} 普通" if emojis else "普通"
         elif m_latency < 600:
-            m_latency_text = f"{settings.red.emoji} Bad" if emojis else "Bad"
+            m_latency_text = f"{settings.red.emoji} 差" if emojis else "差"
         else:
-            m_latency_text = f"{settings.red.emoji} Very Bad" if emojis else "Very Bad"
+            m_latency_text = f"{settings.red.emoji} 極差" if emojis else "極差"
 
         return ws_latency_text, m_latency_text
 
