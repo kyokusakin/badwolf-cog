@@ -155,8 +155,7 @@ class AnotherPingCog(commands.Cog):
             await message.edit(
                 content=(
                     (
-                        "Message Send is worse for slash commands. Try using the text command for "
-                        "a better result."
+                        "Discord的斜線指令會導致訊息發送延遲過高，請直接使用指令來檢查"
                     )
                     if ctx.interaction
                     else None
@@ -166,7 +165,7 @@ class AnotherPingCog(commands.Cog):
 
         else:
             data = [
-                ["Discord WS", "Message Send"],
+                ["Discord WS", "訊息發送"],
                 [ws_latency_text, m_latency_text],
                 [f"{ws_latency} ms", f"{m_latency} ms"],
             ]
