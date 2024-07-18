@@ -150,7 +150,7 @@ class AnotherPingCog(commands.Cog):
             extra = box(f"{ws_latency} ms", "py")
             embed.set_field_at(0, name="Discord WS", value=f"{ws_latency_text}{extra}")
             extra = box(f"{m_latency} ms", "py")
-            embed.add_field(name="Message Send", value=f"{m_latency_text}{extra}")
+            embed.add_field(name="訊息發送", value=f"{m_latency_text}{extra}")
             embed.colour = colour
             await message.edit(
                 content=(
