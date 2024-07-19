@@ -401,20 +401,20 @@ class AutoRoom(
 
         # Check that user isn't spamming
         bucket = self.bucket_autoroom_create.get_bucket(member)
+        timeout_seconds = await self.config.guild(member.guild).timeout_seconds()
         if bucket:
             retry_after = bucket.update_rate_limit()
             if retry_after:
                 warn_bucket = self.bucket_autoroom_create_warn.get_bucket(member)
                 if warn_bucket:
                     if not warn_bucket.update_rate_limit():
-                        timeout_seconds = await self.config.guild(member.guild).timeout_seconds()
                         with suppress(
                             discord.Forbidden,
                             discord.NotFound,
                             discord.HTTPException,
                         ):
                             if timeout_seconds > 0:
-                                await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
+                                await member.timeout(timedelta(seconds=3600), reason="Spam voice channel")
                             await member.send(
                                 "你好！看起來你想建立一個自動房間"
                                 "\n"
