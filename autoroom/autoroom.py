@@ -463,7 +463,7 @@ class AutoRoom(
 
         return False
 
-    def generate_overwrites(self, autoroom_source, autoroom_source_config, member, guild, dest_category):
+    async def generate_overwrites(self, autoroom_source, autoroom_source_config, member, guild, dest_category):
         perms = Perms()
         dest_perms = dest_category.permissions_for(dest_category.guild.me)
         source_overwrites = (
