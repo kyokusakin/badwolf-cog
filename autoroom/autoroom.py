@@ -408,17 +408,21 @@ class AutoRoom(
                 if warn_bucket:
                     if not warn_bucket.update_rate_limit():
                         timeout_seconds = await self.config.guild(member.guild).timeout_seconds()
-                        try:
-                            if timeout_seconds > 0:
+                        with suppress(
+                            discord.Forbidden,
+                            discord.NotFound,
+                            discord.HTTPException,
+                        ):
+                            if timeout_seconds >0:
                                 await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
                             await member.send(
-                                "你好！看起來你想建立一個自動房間\n"
+                                "你好！看起來你想建立一個自動房間"
+                                "\n"
                                 f"請注意，您只被允許建立 **{bucket.rate}** 個自動房間"
-                                f"每 **{humanize_timedelta(seconds=bucket.per)}**\n"
+                                f"每 **{humanize_timedelta(seconds=bucket.per)}**"
+                                "\n"
                                 f"你可以在 **{humanize_timedelta(seconds=max(retry_after, 1))}** 後再試一次"
                             )
-                        except (discord.Forbidden, discord.NotFound, discord.HTTPException):
-                            pass
                     return
 
         # Generate channel name
