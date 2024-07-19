@@ -402,7 +402,7 @@ class AutoRoom(
         # Check that user isn't spamming
         bucket = self.bucket_autoroom_create.get_bucket(member)
         if bucket:
-           retry_after = bucket.update_rate_limit()
+            retry_after = bucket.update_rate_limit()
             if retry_after:
                 warn_bucket = self.bucket_autoroom_create_warn.get_bucket(member)
               if warn_bucket:
