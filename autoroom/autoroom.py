@@ -115,29 +115,18 @@ class AutoRoom(
         """Set up the cog."""
         super().__init__()
         self.bot = bot
-        self.config = Config.get_conf(
-            self, identifier=1224364860, force_registration=True
-        )
+        self.config = Config.get_conf(self, identifier=1224364860, force_registration=True)
         self.config.register_global(**self.default_global_settings)
         self.config.register_guild(**self.default_guild_settings)
+        self.config.guild(ctx.guild).timeout_seconds.set(-1)
         self.config.init_custom("AUTOROOM_SOURCE", 2)
-        self.config.register_custom(
-            "AUTOROOM_SOURCE", **self.default_autoroom_source_settings
-        )
+        self.config.register_custom("AUTOROOM_SOURCE", **self.default_autoroom_source_settings)
         self.config.register_channel(**self.default_channel_settings)
         self.template = Template()
-        self.bucket_autoroom_create = commands.CooldownMapping.from_cooldown(
-            2, 60, lambda member: member
-        )
-        self.bucket_autoroom_create_warn = commands.CooldownMapping.from_cooldown(
-            1, 3600, lambda member: member
-        )
-        self.bucket_autoroom_name = commands.CooldownMapping.from_cooldown(
-            2, 600 + self.extra_channel_name_change_delay, lambda channel: channel
-        )
-        self.bucket_autoroom_owner_claim = commands.CooldownMapping.from_cooldown(
-            1, 120, lambda channel: channel
-        )
+        self.bucket_autoroom_create = commands.CooldownMapping.from_cooldown(2, 60, lambda member: member)
+        self.bucket_autoroom_create_warn = commands.CooldownMapping.from_cooldown(1, 3600, lambda member: member)
+        self.bucket_autoroom_name = commands.CooldownMapping.from_cooldown(2, 600 + self.extra_channel_name_change_delay, lambda channel: channel)
+        self.bucket_autoroom_owner_claim = commands.CooldownMapping.from_cooldown(1, 120, lambda channel: channel)
 
     #
     # Red methods
@@ -380,6 +369,18 @@ class AutoRoom(
     # Private methods
     #
 
+    async def autoroom_timeout(self, ctx: commands.Context, seconds: int):
+        """Set the timeout duration for creating an autoroom. Use -1 to disable."""
+        if seconds < -1:
+            await ctx.send("Invalid timeout duration. It must be -1 or greater.")
+            return
+
+        await self.config.guild(ctx.guild).timeout_seconds.set(seconds)
+        if seconds == -1:
+            await ctx.send("AutoRoom creation timeout has been disabled.")
+        else:
+            await ctx.send(f"AutoRoom creation timeout has been set to {seconds} seconds.")
+
     async def _process_autoroom_create(
         self,
         autoroom_source: discord.VoiceChannel,
@@ -387,50 +388,82 @@ class AutoRoom(
         member: discord.Member,
     ) -> None:
         """Create a voice channel for a member in an AutoRoom Source channel."""
-        # Check perms for guild, source, and dest
         guild = autoroom_source.guild
         dest_category = guild.get_channel(autoroom_source_config["dest_category_id"])
         if not isinstance(dest_category, discord.CategoryChannel):
             return
-        required_check, optional_check, _ = self.check_perms_source_dest(
-            autoroom_source, dest_category
-        )
-        if not required_check or not optional_check:
+
+        if not await self.check_permissions(autoroom_source, dest_category):
             return
 
-        # Check that user isn't spamming
-        bucket = self.bucket_autoroom_create.get_bucket(member)
-        if bucket:
-            retry_after = bucket.update_rate_limit()
-            if retry_after:
-                warn_bucket = self.bucket_autoroom_create_warn.get_bucket(member)
-                if warn_bucket:
-                    if not warn_bucket.update_rate_limit():
-                        with suppress(
-                            discord.Forbidden,
-                            discord.NotFound,
-                            discord.HTTPException,
-                        ):
-                            await member.timeout(timedelta(seconds=3600), reason="Spam voice channel")
-                            await member.send(
-                                "你好！看起來你想建立一個自動房間"
-                                "\n"
-                                f"請注意，您只被允許建立 **{bucket.rate}** 個自動房間"
-                                f"每 **{humanize_timedelta(seconds=bucket.per)}**"
-                                "\n"
-                                f"你可以在 **{humanize_timedelta(seconds=max(retry_after, 1))}** 後再試一次"
-                            )
-                    return
+        if await self.check_spam(member, guild):
+            return
 
-        # Generate channel name
-        taken_channel_names = [
+        new_channel_name = self._generate_channel_name(autoroom_source_config, member, [
             voice_channel.name for voice_channel in dest_category.voice_channels
-        ]
-        new_channel_name = self._generate_channel_name(
-            autoroom_source_config, member, taken_channel_names
-        )
+        ])
 
-        # Generate overwrites
+        perms = self.generate_overwrites(autoroom_source, autoroom_source_config, member, guild, dest_category)
+
+        new_voice_channel = await self.create_voice_channel(guild, new_channel_name, dest_category, autoroom_source, perms)
+
+        await self.config.channel(new_voice_channel).source_channel.set(autoroom_source.id)
+        if autoroom_source_config["room_type"] != "server":
+            await self.config.channel(new_voice_channel).owner.set(member.id)
+        try:
+            await asyncio.sleep(0.2)
+            await member.move_to(new_voice_channel, reason="AutoRoom: Move user to new AutoRoom.")
+        except discord.HTTPException:
+            await self._process_autoroom_delete(new_voice_channel)
+            return
+
+        new_legacy_text_channel = await self.create_legacy_text_channel(autoroom_source_config, guild, new_channel_name, dest_category, member, perms)
+        if new_legacy_text_channel:
+            await self.config.channel(new_voice_channel).associated_text_channel.set(new_legacy_text_channel.id)
+
+        await self.send_text_channel_hint(autoroom_source_config, member, new_voice_channel, new_legacy_text_channel)
+
+    async def check_permissions(self, autoroom_source: discord.VoiceChannel, dest_category: discord.CategoryChannel) -> bool:
+        required_check, optional_check, _ = self.check_perms_source_dest(autoroom_source, dest_category)
+        return required_check and optional_check
+
+    async def check_spam(self, member: discord.Member, guild: discord.Guild) -> bool:
+        bucket = self.bucket_autoroom_create.get_bucket(member)
+        if not bucket:
+            return False
+
+        retry_after = bucket.update_rate_limit()
+        if not retry_after:
+            return False
+
+        warn_bucket = self.bucket_autoroom_create_warn.get_bucket(member)
+        if not warn_bucket:
+            return False
+
+        if not warn_bucket.update_rate_limit():
+            timeout_seconds = await self.config.guild(guild).timeout_seconds()
+            if timeout_seconds == -1:
+                return True
+
+            with suppress(
+                discord.Forbidden,
+                discord.NotFound,
+                discord.HTTPException,
+            ):
+                await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
+                await member.send(
+                    "你好！看起來你想建立一個自動房間"
+                    "\n"
+                    f"請注意，您只被允許建立 **{bucket.rate}** 個自動房間"
+                    f"每 **{humanize_timedelta(seconds=bucket.per)}**"
+                    "\n"
+                    f"你可以在 **{humanize_timedelta(seconds=max(retry_after, 1))}** 後再試一次"
+                )
+            return True
+
+        return False
+
+    def generate_overwrites(self, autoroom_source, autoroom_source_config, member, guild, dest_category):
         perms = Perms()
         dest_perms = dest_category.permissions_for(dest_category.guild.me)
         source_overwrites = (
@@ -438,21 +471,12 @@ class AutoRoom(
         )
         member_roles = self.get_member_roles(autoroom_source)
         for target, permissions in source_overwrites.items():
-            # We can't put manage_roles in overwrites, so just get rid of it
             permissions.update(manage_roles=None)
-            # Check each permission for each overwrite target to make sure the bot has it allowed in the dest category
-            failed_checks = {}
-            for name, value in permissions:
-                if value is not None:
-                    permission_check_result = getattr(dest_perms, name)
-                    if not permission_check_result:
-                        # If the bot doesn't have the permission allowed in the dest category, just ignore it. Too bad!
-                        failed_checks[name] = None
+            failed_checks = {name: None for name, value in permissions if value is not None and not getattr(dest_perms, name)}
             if failed_checks:
                 permissions.update(**failed_checks)
             perms.overwrite(target, permissions)
             if member_roles and target in member_roles:
-                # If we have member roles and this target is one, apply AutoRoom type permissions
                 if autoroom_source_config["room_type"] == "private":
                     perms.update(target, self.perms_private)
                 elif autoroom_source_config["room_type"] == "locked":
@@ -460,7 +484,6 @@ class AutoRoom(
                 else:
                     perms.update(target, self.perms_public)
 
-        # Update overwrites for default role to account for AutoRoom type
         if member_roles or autoroom_source_config["room_type"] == "private":
             perms.update(guild.default_role, self.perms_private)
         elif autoroom_source_config["room_type"] == "locked":
@@ -468,28 +491,23 @@ class AutoRoom(
         else:
             perms.update(guild.default_role, self.perms_public)
 
-        # Bot overwrites
         perms.update(guild.me, self.perms_bot_dest)
 
-        # AutoRoom Owner overwrites
         if autoroom_source_config["room_type"] != "server":
             perms.update(member, self.perms_autoroom_owner)
 
-        # Admin/moderator/bot overwrites
-        # Add bot roles to be allowed
         additional_allowed_roles = await self.get_bot_roles(guild)
         if await self.config.guild(guild).mod_access():
-            # Add mod roles to be allowed
             additional_allowed_roles += await self.bot.get_mod_roles(guild)
         if await self.config.guild(guild).admin_access():
-            # Add admin roles to be allowed
             additional_allowed_roles += await self.bot.get_admin_roles(guild)
         for role in additional_allowed_roles:
-            # Add all the mod/admin roles, if required
             perms.update(role, self.perms_public)
 
-        # Create new AutoRoom
-        new_voice_channel = await guild.create_voice_channel(
+        return perms
+
+    async def create_voice_channel(self, guild, new_channel_name, dest_category, autoroom_source, perms):
+        return await guild.create_voice_channel(
             name=new_channel_name,
             category=dest_category,
             reason="AutoRoom: New AutoRoom needed.",
@@ -497,64 +515,44 @@ class AutoRoom(
             bitrate=min(autoroom_source.bitrate, int(guild.bitrate_limit)),
             user_limit=autoroom_source.user_limit,
         )
-        await self.config.channel(new_voice_channel).source_channel.set(
-            autoroom_source.id
-        )
+
+    async def create_legacy_text_channel(self, autoroom_source_config, guild, new_channel_name, dest_category, member, perms):
+        if not autoroom_source_config["legacy_text_channel"]:
+            return None
+
+        dest_perms = dest_category.permissions_for(dest_category.guild.me)
+        for perm_name in self.perms_bot_dest_legacy_text:
+            if not getattr(dest_perms, perm_name):
+                return None
+
+        perms.update(guild.me, self.perms_bot_dest_legacy_text)
+        perms.update(guild.default_role, self.perms_legacy_text_deny)
         if autoroom_source_config["room_type"] != "server":
-            await self.config.channel(new_voice_channel).owner.set(member.id)
-        try:
-            await asyncio.sleep(0.2)
-            await member.move_to(
-                new_voice_channel, reason="AutoRoom: Move user to new AutoRoom."
-            )
-        except discord.HTTPException:
-            await self._process_autoroom_delete(new_voice_channel)
-            return
+            perms.update(member, self.perms_autoroom_owner_legacy_text)
+        else:
+            perms.update(member, self.perms_legacy_text_allow)
 
-        # Create optional legacy text channel
-        new_legacy_text_channel = None
-        if autoroom_source_config["legacy_text_channel"]:
-            # Sanity check on required permissions
-            for perm_name in self.perms_bot_dest_legacy_text:
-                if not getattr(dest_perms, perm_name):
-                    return
-            # Generate overwrites
-            perms = Perms()
-            perms.update(guild.me, self.perms_bot_dest_legacy_text)
-            perms.update(guild.default_role, self.perms_legacy_text_deny)
-            if autoroom_source_config["room_type"] != "server":
-                perms.update(member, self.perms_autoroom_owner_legacy_text)
-            else:
-                perms.update(member, self.perms_legacy_text_allow)
-            # Admin/moderator overwrites
-            additional_allowed_roles_text = []
-            if await self.config.guild(guild).mod_access():
-                # Add mod roles to be allowed
-                additional_allowed_roles_text += await self.bot.get_mod_roles(guild)
-            if await self.config.guild(guild).admin_access():
-                # Add admin roles to be allowed
-                additional_allowed_roles_text += await self.bot.get_admin_roles(guild)
-            for role in additional_allowed_roles_text:
-                # Add all the mod/admin roles, if required
-                perms.update(role, self.perms_legacy_text_allow)
-            # Create text channel
-            text_channel_topic = self.template.render(
-                autoroom_source_config["text_channel_topic"],
-                self.get_template_data(member),
-            )
-            new_legacy_text_channel = await guild.create_text_channel(
-                name=new_channel_name.replace("'s ", " "),
-                category=dest_category,
-                topic=text_channel_topic,
-                reason="AutoRoom: New legacy text channel needed.",
-                overwrites=perms.overwrites if perms.overwrites else {},
-            )
+        additional_allowed_roles_text = []
+        if await self.config.guild(guild).mod_access():
+            additional_allowed_roles_text += await self.bot.get_mod_roles(guild)
+        if await self.config.guild(guild).admin_access():
+            additional_allowed_roles_text += await self.bot.get_admin_roles(guild)
+        for role in additional_allowed_roles_text:
+            perms.update(role, self.perms_legacy_text_allow)
 
-            await self.config.channel(new_voice_channel).associated_text_channel.set(
-                new_legacy_text_channel.id
-            )
+        text_channel_topic = self.template.render(
+            autoroom_source_config["text_channel_topic"],
+            self.get_template_data(member),
+        )
+        return await guild.create_text_channel(
+            name=new_channel_name.replace("'s ", " "),
+            category=dest_category,
+            topic=text_channel_topic,
+            reason="AutoRoom: New legacy text channel needed.",
+            overwrites=perms.overwrites if perms.overwrites else {},
+        )
 
-        # Send text chat hint if enabled
+    async def send_text_channel_hint(self, autoroom_source_config, member, new_voice_channel, new_legacy_text_channel):
         if autoroom_source_config["text_channel_hint"]:
             with suppress(RuntimeError):
                 hint = self.template.render(
