@@ -46,6 +46,7 @@ class AutoRoom(
         "admin_access": True,
         "mod_access": False,
         "bot_access": [],
+        "timeout_seconds": -1,
     }
     default_autoroom_source_settings: ClassVar[dict[str, int | str | None]] = {
         "dest_category_id": None,
@@ -55,7 +56,6 @@ class AutoRoom(
         "text_channel_topic": "",
         "channel_name_type": "username",
         "channel_name_format": "",
-        "timeout_seconds": -1,
     }
     default_channel_settings: ClassVar[dict[str, int | None]] = {
         "source_channel": None,
@@ -401,7 +401,7 @@ class AutoRoom(
 
         # Check that user isn't spamming
         bucket = self.bucket_autoroom_create.get_bucket(member)
-        timeout_seconds = await self.config.custom("AUTOROOM_SOURCE").timeout_seconds()
+        timeout_seconds = await self.config.guild(member.guild).timeout_seconds()
         if timeout_seconds > 0:
             await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
         if bucket:
