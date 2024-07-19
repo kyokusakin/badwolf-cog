@@ -42,7 +42,7 @@ class AutoRoom(
     __version__ = "3.7.3"
 
     default_global_settings: ClassVar[dict[str, int]] = {"schema_version": 0}
-    default_guild_settings: ClassVar[dict[str, bool, int | list[int]]] = {
+    default_guild_settings: ClassVar[dict[str, Union[bool, int, List[int]]]] = {
         "admin_access": True,
         "mod_access": False,
         "bot_access": [],
