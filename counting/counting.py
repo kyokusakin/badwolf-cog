@@ -54,51 +54,51 @@ class Counting(commands.Cog):
                  "3: 如果有人數錯了，那就從頭來過吧！")
         await ctx.send(rules)
 
-    async def update_count(self, msg, new_count):
-        conf = self.config.guild(msg.guild)
+    async def update_count(self, message, new_count):
+        conf = self.config.guild(message.guild)
         async with conf.count_board() as board:
-            board[msg.author.id] = board.get(msg.author.id, 0) + 1
+            board[message.author.id] = board.get(message.author.id, 0) + 1
         await conf.current_count.set(new_count)
-        await conf.last_counter.set(msg.author.id)
+        await conf.last_counter.set(message.author.id)
         if new_count > await conf.highest_number():
             await conf.highest_number.set(new_count)
 
 
     @commands.Cog.listener()
-    async def on_message(self, msg):
-        if msg.author.bot:
+    async def on_message(self, message):
+        if message.author.bot:
             return
-        if msg.guild is None:
+        if message.guild is None:
             return
-        conf = self.config.guild(msg.guild)
+        conf = self.config.guild(message.guild)
         channel_id = await conf.counting_channel()
         bot_sent_last_message = await conf.bot_sent_last_message()
         random_image = random.choice(self.image)
-        if msg.channel.id != channel_id:
+        if message.channel.id != channel_id:
             return
         try:
-            count = int(msg.content)
+            count = int(message.content)
         except ValueError:
-            embed3 = discord.Embed(title="數數機器人", description=f"{msg.author.mention}\n 不要在這聊天!!!", color=0x2b2d31)
+            embed3 = discord.Embed(title="數數機器人", description=f"{message.author.mention}\n 不要在這聊天!!!", color=0x2b2d31)
             embed3.set_image(url=random_image)
-            response = await msg.reply(embed=embed3, mention_author=True)
-            await msg.delete(delay=4)
+            response = await message.reply(embed=embed3, mention_author=True)
+            await message.delete(delay=4)
             await response.delete(delay=4)
             return
         last_counter = await conf.last_counter()
-        if msg.author.id == last_counter:
-            await msg.add_reaction("❌")
-            return await msg.reply(embed=self.get_embed(msg.author, "你不能連續數兩次!"))
+        if message.author.id == last_counter:
+            await message.add_reaction("❌")
+            return await message.reply(embed=self.get_embed(message.author, "你不能連續數兩次!"))
         current_count = await conf.current_count()
         if count != current_count + 1:
             await conf.current_count.set(0)
             await conf.last_counter.set(None)
             highest = await conf.highest_number()
-            await msg.add_reaction("❌")
-            return await msg.reply(embed=self.get_embed(msg.author, f"BAKA~ BAKA~,你算錯了!計數又得重新從1開始了!\n目前最高數字是:{highest}"))
-        await self.update_count(msg, count)
+            await message.add_reaction("❌")
+            return await message.reply(embed=self.get_embed(message.author, f"BAKA~ BAKA~,你算錯了!計數又得重新從1開始了!\n目前最高數字是:{highest}"))
+        await self.update_count(message, count)
         await conf.bot_sent_last_message.set(False)
-        await msg.add_reaction("✅")
+        await message.add_reaction("✅")
 
     def get_embed(self, author, description):
         random_image = random.choice(self.image)
@@ -110,7 +110,7 @@ class Counting(commands.Cog):
     async def on_message_delete(self, message):
         if message.author.bot:
             return
-        if msg.guild is None:
+        if message.guild is None:
             return
         conf = self.config.guild(message.guild)
         counting_channel = await conf.counting_channel()
@@ -130,7 +130,7 @@ class Counting(commands.Cog):
     async def on_message_edit(self, before, after):
         if after.author.bot:
             return
-        if msg.guild is None:
+        if after.guild is None:
             return
         conf = self.config.guild(after.guild)
         counting_channel = await conf.counting_channel()
