@@ -126,7 +126,6 @@ class AutoRoom(
             "AUTOROOM_SOURCE", **self.default_autoroom_source_settings
         )
         self.config.register_channel(**self.default_channel_settings)
-        self.timeout_seconds = self.config.timeout_seconds()
         self.template = Template()
         self.bucket_autoroom_create = commands.CooldownMapping.from_cooldown(
             2, 60, lambda member: member
@@ -403,6 +402,7 @@ class AutoRoom(
 
         # Check that user isn't spamming
         bucket = self.bucket_autoroom_create.get_bucket(member)
+        self.timeout_seconds = await self.config.timeout_seconds()
         if bucket:
             retry_after = bucket.update_rate_limit()
             if retry_after:
