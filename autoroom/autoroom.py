@@ -402,14 +402,14 @@ class AutoRoom(
 
         # Check that user isn't spamming
         bucket = self.bucket_autoroom_create.get_bucket(member)
+        timeout_seconds = await self.config.timeout_seconds()
         if bucket:
             retry_after = bucket.update_rate_limit()
             if retry_after:
                 warn_bucket = self.bucket_autoroom_create_warn.get_bucket(member)
                 if warn_bucket:
                     if not warn_bucket.update_rate_limit():
-                        if self.autoroom_timeout != -1:
-                            self.timeout_seconds = await self.config.timeout_seconds()
+                        if timeout_seconds != -1:
                             with suppress(
                                 Forbidden,
                                 NotFound,
