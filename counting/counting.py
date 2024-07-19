@@ -25,7 +25,7 @@ class Counting(commands.Cog):
             "https://i.gifer.com/79UR.gif",
             "https://memeprod.ap-south-1.linodeobjects.com/user-maker-thumbnail/3dd8f15de8466c5247458d75b7223189.gif"
             ]
-        
+
     @commands.mod_or_can_manage_channel()
     @commands.hybrid_command()
     async def setcounting(self, ctx, channel: discord.TextChannel):
@@ -53,7 +53,7 @@ class Counting(commands.Cog):
                  "2: 每個數字都應該有輪番發言的用戶\n"
                  "3: 如果有人數錯了，那就從頭來過吧！")
         await ctx.send(rules)
- 
+
     async def update_count(self, msg, new_count):
         conf = self.config.guild(msg.guild)
         async with conf.count_board() as board:
@@ -110,10 +110,11 @@ class Counting(commands.Cog):
     async def on_message_delete(self, message):
         if message.author.bot:
             return
+        if msg.guild is None:
+            return
         conf = self.config.guild(message.guild)
         counting_channel = await conf.counting_channel()
         bot_sent_last_message = await conf.bot_sent_last_message()
-        # 在這裡檢查消息是否在計數頻道中
         if message.channel.id == counting_channel and not bot_sent_last_message:
             try:
                 last_counter = await conf.last_counter()
@@ -128,6 +129,8 @@ class Counting(commands.Cog):
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
         if after.author.bot:
+            return
+        if msg.guild is None:
             return
         conf = self.config.guild(after.guild)
         counting_channel = await conf.counting_channel()
