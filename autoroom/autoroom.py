@@ -400,6 +400,8 @@ class AutoRoom(
             return
 
         # Check that user isn't spamming
+        if timeout_seconds > 0:
+            await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
         bucket = self.bucket_autoroom_create.get_bucket(member)
         timeout_seconds = await self.config.guild(member.guild).timeout_seconds()
         if bucket:
@@ -413,8 +415,6 @@ class AutoRoom(
                             discord.NotFound,
                             discord.HTTPException,
                         ):
-                            if timeout_seconds > 0:
-                                await member.timeout(timedelta(seconds=3600), reason="Spam voice channel")
                             await member.send(
                                 "你好！看起來你想建立一個自動房間"
                                 "\n"
