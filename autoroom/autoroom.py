@@ -117,8 +117,7 @@ class AutoRoom(
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1224364860, force_registration=True)
         self.config.register_global(**self.default_global_settings)
-        self.config.register_guild(**self.default_guild_settings)
-        self.config.guild(ctx.guild).timeout_seconds.set(-1)
+        self.config.register_guild(**self.default_guild_settings, timeout_seconds=-1)
         self.config.init_custom("AUTOROOM_SOURCE", 2)
         self.config.register_custom("AUTOROOM_SOURCE", **self.default_autoroom_source_settings)
         self.config.register_channel(**self.default_channel_settings)
