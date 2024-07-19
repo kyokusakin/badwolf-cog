@@ -402,7 +402,6 @@ class AutoRoom(
 
         # Check that user isn't spamming
         bucket = self.bucket_autoroom_create.get_bucket(member)
-        self.timeout_seconds = await self.config.timeout_seconds()
         if bucket:
             retry_after = bucket.update_rate_limit()
             if retry_after:
@@ -410,13 +409,13 @@ class AutoRoom(
                 if warn_bucket:
                     if not warn_bucket.update_rate_limit():
                         if self.autoroom_timeout != -1:
-                            timeout_seconds = self.timeout_seconds
+                            self.timeout_seconds = await self.config.timeout_seconds()
                             with suppress(
                                 Forbidden,
                                 NotFound,
                                 HTTPException,
                             ):
-                                await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
+                                await member.timeout(timedelta(seconds=self.timeout_seconds), reason="Spam voice channel")
                         with suppress(
                             Forbidden,
                             NotFound,
