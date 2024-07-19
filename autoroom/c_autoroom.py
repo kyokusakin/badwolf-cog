@@ -138,12 +138,12 @@ class AutoRoomCommands(MixinMeta, ABC):
         if not ctx.guild:
             return
         if seconds == -1:
-            self.timeout_seconds = -1
+            await self.config.guild(ctx.guild).timeout_seconds.set(-1)
             await ctx.send("Auto-room timeout has been disabled.")
         elif seconds < 0:
             await ctx.send("Please enter a valid number of seconds.")
         else:
-            self.timeout_seconds = seconds
+            await self.config.guild(ctx.guild).timeout_seconds.set(seconds)
             await ctx.send(f"Auto-room timeout has been set to {seconds} seconds.")
 
     @autoroom.command(name="name")
