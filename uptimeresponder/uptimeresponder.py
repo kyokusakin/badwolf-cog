@@ -89,7 +89,6 @@ class UptimeResponder(commands.Cog):
         self.app.router.add_get("/", self.main_page)
         self.app.router.add_get("/status", self.get_status)
         self.app.router.add_route('GET', '/{filename:.*}', self.static_file_handler)
-        
         self.runner = web.AppRunner(self.app)
         await self.runner.setup()
         await web.TCPSite(self.runner, port=port).start()
@@ -105,8 +104,8 @@ class UptimeResponder(commands.Cog):
         async with ctx.typing():
             await self.shutdown_webserver()
             try:
-                await self.start_webserver(port)
                 await self.config.port.set(port)
+                await self.start_webserver(port)
                 await ctx.send(f"The web server has been restarted on port {port}.")
             except OSError as e:
                 await ctx.send(f"Failed to start web server on port {port}: ```\n{e}```\nPlease choose a different port. No web server is running at the moment.")
