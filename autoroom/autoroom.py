@@ -413,7 +413,7 @@ class AutoRoom(
                             discord.NotFound,
                             discord.HTTPException,
                         ):
-                            if timeout_seconds >0:
+                            if timeout_seconds > 0:
                                 await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
                             await member.send(
                                 "你好！看起來你想建立一個自動房間"
