@@ -5,7 +5,6 @@ from contextlib import suppress
 from typing import Any, ClassVar
 
 import discord
-from discord.errors import Forbidden, NotFound, HTTPException
 from redbot.core import Config, commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_timedelta
@@ -140,7 +139,6 @@ class AutoRoom(
         self.bucket_autoroom_owner_claim = commands.CooldownMapping.from_cooldown(
             1, 120, lambda channel: channel
         )
-
 
     #
     # Red methods
@@ -402,35 +400,30 @@ class AutoRoom(
             return
 
         # Check that user isn't spamming
-        bucket = self.bucket_autoroom_create.get_bucket(member)
-        timeout_seconds = await self.config.guild(guild).timeout_seconds()
-        if bucket:
-            retry_after = bucket.update_rate_limit()
-            if retry_after:
-                warn_bucket = self.bucket_autoroom_create_warn.get_bucket(member)
-                if warn_bucket:
-                    if not warn_bucket.update_rate_limit():
-                        if timeout_seconds != -1:
-                            with suppress(
-                                Forbidden,
-                                NotFound,
-                                HTTPException,
-                            ):
-                                await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
-                        with suppress(
-                            Forbidden,
-                            NotFound,
-                            HTTPException,
-                        ):
-                            await member.send(
-                                "你好！看起來你想建立一個自動房間"
-                                "\n"
-                                f"請注意，您只被允許建立 **{bucket.rate}** 個自動房間"
-                                f"每 **{humanize_timedelta(seconds=bucket.per)}**"
-                                "\n"
-                                f"你可以在 **{humanize_timedelta(seconds=max(retry_after, 1))}** 後再試一次"
-                            )
-                    return
+    bucket = self.bucket_autoroom_create.get_bucket(member)
+    if bucket:
+        retry_after = bucket.update_rate_limit()
+        if retry_after:
+            warn_bucket = self.bucket_autoroom_create_warn.get_bucket(member)
+            if warn_bucket:
+                if not warn_bucket.update_rate_limit():
+                    timeout_seconds = await self.config.guild(guild).timeout_seconds()
+                    with suppress(
+                        discord.Forbidden,
+                        discord.NotFound,
+                        discord.HTTPException,
+                    ):
+                        if timeout_seconds > 0:  # 只有当 timeout_seconds 大于 0 时才应用 timeout
+                            await member.timeout(timedelta(seconds=timeout_seconds), reason="Spam voice channel")
+                        await member.send(
+                            "你好！看起來你想建立一個自動房間"
+                            "\n"
+                            f"請注意，您只被允許建立 **{bucket.rate}** 個自動房間"
+                            f"每 **{humanize_timedelta(seconds=bucket.per)}**"
+                            "\n"
+                            f"你可以在 **{humanize_timedelta(seconds=max(retry_after, 1))}** 後再試一次"
+                        )
+                return
 
         # Generate channel name
         taken_channel_names = [
