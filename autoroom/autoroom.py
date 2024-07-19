@@ -5,6 +5,7 @@ from contextlib import suppress
 from typing import Any, ClassVar
 
 import discord
+from discord.errors import Forbidden, NotFound, HTTPException
 from redbot.core import Config, commands
 from redbot.core.bot import Red
 from redbot.core.utils.chat_formatting import humanize_timedelta
