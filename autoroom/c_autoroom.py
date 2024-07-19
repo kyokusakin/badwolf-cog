@@ -128,6 +128,21 @@ class AutoRoomCommands(MixinMeta, ABC):
 
         await ctx.send(str(room_settings.display(access_settings)))
 
+    @autoroom.command(name='timeout')
+    async def autoroom_timeout(self, ctx: commands.Context, seconds: int) -> None:
+        """
+        Set the auto-room timeout.
+        Use -1 to disable the timeout.
+        """
+        if seconds == -1:
+            self.autoroom_timeout = -1
+            await ctx.send("Auto-room timeout has been disabled.")
+        elif seconds < 0:
+            await ctx.send("Please enter a valid number of seconds.")
+        else:
+            self.autoroom_timeout = seconds
+            await ctx.send(f"Auto-room timeout has been set to {seconds} seconds.")
+
     @autoroom.command(name="name")
     async def autoroom_name(self, ctx: commands.Context, *, name: str) -> None:
         """Change the name of your AutoRoom."""
