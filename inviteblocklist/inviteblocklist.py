@@ -76,7 +76,19 @@ class InviteBlocklist(commands.Cog):
             staff_role=None,
             immunity_list=[],
         )
-        self.warnsystem = bot.get_cog('WarnSystem').api
+        self.warnsystem = None
+        self.warnsystem_available = False
+
+    async def initialize(self):
+        for _ in range(5):
+            warnsystem = self.bot.get_cog('WarnSystem')
+            if warnsystem is not None:
+                self.warnsystem = warnsystem.api
+                self.warnsystem_available = True
+                return True
+            await asyncio.sleep(1)
+        log.warning("WarnSystem cog is not available. Some functionalities will be disabled.")
+        return False
 
     async def red_delete_data_for_user(self, **kwargs):
         """
@@ -154,7 +166,10 @@ class InviteBlocklist(commands.Cog):
 
         guild = message.guild
         staff_role_id = await self.config.guild(guild).staff_role()
-        staff_role_mention = f"<@&{staff_role_id}>" if staff_role_id else "請使用[p]inviteblocklist staffrole add [role]設定"
+        if staff_role_id:
+            staff_role_mention = f"<@&{staff_role_id}>"
+        else:
+            staff_role_mention = None
 
         await self._process_invites(guild, message, find, staff_role_mention)
 
@@ -193,7 +208,8 @@ class InviteBlocklist(commands.Cog):
             await message.channel.send(embed=embed)
             await message.channel.send(f"{staff_role_mention}", allowed_mentions=discord.AllowedMentions(roles=True))
             await message.delete()
-            await self.warnsystem.warn(guild, [message.author], guild.me, 1, reason="未授權的Discord邀請連結")
+            if self.warnsystem_available:
+                await self.warnsystem.warn(guild, [message.author], guild.me, 1, reason="未授權的Discord邀請連結")
         except discord.errors.Forbidden:
             log.error("I tried to delete an invite link posted in %s but lacked the permission to do so", guild.name)
 
