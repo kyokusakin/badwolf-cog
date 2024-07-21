@@ -37,21 +37,45 @@ class Counting(commands.Cog):
     async def currentcount(self, ctx):
         """Display the current count"""
         count = await self.config.guild(ctx.guild).current_count()
+        channel_id = await self.config.guild(ctx.guild).counting_channel()
+        try:
+            if channel_id is None:
+                await ctx.channel.send("Counting channel is not set.")
+                return
+            if ctx.channel.id != channel_id:
+                await ctx.author.send(f"目前已經數到 `{count}`")
+                return
+        except discord.Forbidden:
+            pass
         await ctx.send(f"目前已經數到 `{count}`")
 
     @commands.mod_or_can_manage_channel()
     @commands.hybrid_command()
     async def resetcountchannel(self, ctx):
         """Reset the counting!"""
+        channel_id = await self.config.guild(ctx.guild).counting_channel()
+        if channel_id is None:
+            await ctx.channel.send("Counting channel is not set.")
+            return
         await self.config.guild(ctx.guild).counting_channel.set(None)
         await ctx.send("Counting channel has been reset.")
 
     @commands.hybrid_command()
     async def countrules(self, ctx):
         """Display the rules for counting."""
+        channel_id = await self.config.guild(ctx.guild).counting_channel()
         rules = ("1: 一個人不能連續兩次\n"
                  "2: 每個數字都應該有輪番發言的用戶\n"
                  "3: 如果有人數錯了，那就從頭來過吧！")
+        try:
+            if channel_id is None:
+                await ctx.channel.send("Counting channel is not set.")
+                return
+            if ctx.channel.id != channel_id:
+                await ctx.author.send(rules)
+            return
+        except discord.Forbidden:
+            pass
         await ctx.send(rules)
 
     async def update_count(self, message, new_count):
