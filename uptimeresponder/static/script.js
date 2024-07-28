@@ -1,1 +1,62 @@
-let serverStartTime,lastUpdateTime,uptimeInterval;const formatUptime=t=>{const e=Math.floor(t/1e3),n=Math.floor(e/86400),r=Math.floor(e%86400/3600),a=Math.floor(e%3600/60),o=e%60;return`${n.toString().padStart(2,"0")}:${r.toString().padStart(2,"0")}:${a.toString().padStart(2,"0")}:${o.toString().padStart(2,"0")}`},updateUptime=()=>{const t=Date.now(),e=t-serverStartTime;document.getElementById("uptime").textContent=formatUptime(e)},handleStatusResponse=t=>{const e=parseUptimeString(t.uptime),n=Date.now();if(serverStartTime){const t=n-serverStartTime,r=Math.abs(e-t);r>2e3&&(serverStartTime=n-e)}else serverStartTime=n-e,uptimeInterval=setInterval(updateUptime,1e3);document.getElementById("uptime").textContent=formatUptime(e),document.getElementById("latency").textContent=`${t.latency} ms`,lastUpdateTime=n},fetchStatus=()=>{fetch("/status").then(t=>t.ok?t.json():Promise.reject("Network response was not ok")).then(handleStatusResponse).catch(t=>{console.error("Error fetching status:",t),document.getElementById("latency").textContent="Time out",Date.now()-lastUpdateTime>3e4&&(document.getElementById("uptime").textContent="Time out",clearInterval(uptimeInterval),uptimeInterval=null,serverStartTime=null)})},parseUptimeString=t=>{const[e,n,r,a]=t.split(":").map(Number);return 1e3*(86400*e+3600*n+60*r+a)};document.addEventListener("DOMContentLoaded",()=>{fetchStatus(),setInterval(fetchStatus,1e4)});
+let serverStartTime, lastUpdateTime, uptimeInterval;
+
+const formatUptime = (milliseconds) => {
+    const seconds = Math.floor(milliseconds / 1000);
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+const updateUptime = () => {
+    const now = Date.now();
+    const uptime = now - serverStartTime;
+    document.getElementById('uptime').textContent = formatUptime(uptime);
+};
+
+const handleStatusResponse = (data) => {
+    const serverUptime = parseUptimeString(data.uptime);
+    const now = Date.now();
+
+    if (!serverStartTime) {
+        serverStartTime = now - serverUptime;
+        uptimeInterval = setInterval(updateUptime, 1000);
+    } else {
+        const expectedUptime = now - serverStartTime;
+        const diff = Math.abs(serverUptime - expectedUptime);
+        if (diff > 2000) {
+            serverStartTime = now - serverUptime;
+        }
+    }
+
+    document.getElementById('uptime').textContent = formatUptime(serverUptime);
+    document.getElementById('latency').textContent = `${data.latency} ms`;
+    lastUpdateTime = now;
+};
+
+const fetchStatus = () => {
+    fetch('/status')
+        .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok'))
+        .then(handleStatusResponse)
+        .catch(error => {
+            console.error('Error fetching status:', error);
+            document.getElementById('latency').textContent = 'Time out';
+            if (Date.now() - lastUpdateTime > 30000) {
+                document.getElementById('uptime').textContent = 'Time out';
+                clearInterval(uptimeInterval);
+                uptimeInterval = null;
+                serverStartTime = null;
+            }
+        });
+};
+
+const parseUptimeString = (uptimeString) => {
+    const [days, hours, minutes, seconds] = uptimeString.split(':').map(Number);
+    return (days * 86400 + hours * 3600 + minutes * 60 + seconds) * 1000;
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchStatus();
+    setInterval(fetchStatus, 10000);
+});
