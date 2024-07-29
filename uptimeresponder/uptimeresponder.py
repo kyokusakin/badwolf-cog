@@ -89,7 +89,7 @@ class UptimeResponder(commands.Cog):
         self.app.router.add_get("/", self.main_page)
         self.app.router.add_get("/status", self.get_status)
         self.app.router.add_route('GET', '/{filename:.*}', self.static_file_handler)
-        self.runner = web.AppRunner(self.app)
+        self.runner = web.AppRunner(self.app, access_log=None)
         await self.runner.setup()
         await web.TCPSite(self.runner, port=port).start()
         log.info(f"Web server for UptimeResponder pings has started on port {port}.")
