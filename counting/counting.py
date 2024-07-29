@@ -30,12 +30,14 @@ class Counting(commands.Cog):
     @commands.hybrid_command()
     async def setcounting(self, ctx, channel: discord.TextChannel):
         """Set a counting channel for the game to began!"""
+        await ctx.defer()
         await self.config.guild(ctx.guild).counting_channel.set(channel.id)
         await ctx.send(f"Counting channel has been set to {channel.mention}")
 
     @commands.hybrid_command()
     async def currentcount(self, ctx):
         """Display the current count"""
+        await ctx.defer()
         count = await self.config.guild(ctx.guild).current_count()
         channel_id = await self.config.guild(ctx.guild).counting_channel()
         try:
@@ -53,6 +55,7 @@ class Counting(commands.Cog):
     @commands.hybrid_command()
     async def resetcountchannel(self, ctx):
         """Reset the counting!"""
+        await ctx.defer()
         channel_id = await self.config.guild(ctx.guild).counting_channel()
         if channel_id is None:
             await ctx.channel.send("Counting channel is not set.")
@@ -63,6 +66,7 @@ class Counting(commands.Cog):
     @commands.hybrid_command()
     async def countrules(self, ctx):
         """Display the rules for counting."""
+        await ctx.defer()
         channel_id = await self.config.guild(ctx.guild).counting_channel()
         rules = ("1: 一個人不能連續兩次\n"
                  "2: 每個數字都應該有輪番發言的用戶\n"
