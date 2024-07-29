@@ -1,6 +1,4 @@
-let serverStartTime;
-let lastUpdateTime;
-let uptimeInterval;
+let serverStartTime, lastUpdateTime, uptimeInterval, statusInterval;
 
 const formatUptime = (milliseconds) => {
     const seconds = Math.floor(milliseconds / 1000);
@@ -23,10 +21,10 @@ const handleStatusResponse = (data) => {
 
     if (!serverStartTime) {
         serverStartTime = now - serverUptime;
-        uptimeInterval = setInterval(updateUptime, 1000);
     } else {
         const expectedUptime = now - serverStartTime;
-        if (Math.abs(serverUptime - expectedUptime) > 2000) {
+        const diff = Math.abs(serverUptime - expectedUptime);
+        if (diff > 2000) {
             serverStartTime = now - serverUptime;
         }
     }
@@ -34,11 +32,49 @@ const handleStatusResponse = (data) => {
     document.getElementById('uptime').textContent = formatUptime(serverUptime);
     document.getElementById('latency').textContent = `${data.latency} ms`;
     lastUpdateTime = now;
+
+    if (!uptimeInterval) {
+        uptimeInterval = setInterval(updateUptime, 1000);
+    }
 };
 
 const fetchStatus = () => {
-    fetch('/status')
-        .then(response => response.ok ? response.json() : Promise.reject('Network response was not ok'))
+    fetch('/status', { method: 'GET' })
+        .then(response => {
+            if (response.status === 429) {
+                document.getElementById('uptime').textContent = 'Rate limited';
+                clearInterval(uptimeInterval);
+                uptimeInterval = null;
+
+                const retryAfter = response.headers.get('Retry-After');
+                if (retryAfter) {
+                    console.warn(`Rate limited. Retrying after ${retryAfter} seconds.`);
+                    setTimeout(() => {
+                        fetchStatus();
+                        statusInterval = setInterval(fetchStatus, 10000);
+                    }, retryAfter * 1000);
+                } else {
+                    console.warn('Rate limited. Retrying after 10 seconds.');
+                    setTimeout(() => {
+                        fetchStatus();
+                        statusInterval = setInterval(fetchStatus, 10000);
+                    }, 10000);
+                }
+                clearInterval(statusInterval);
+                return Promise.reject('Rate limited');
+            }
+            if (response.status === 403) {
+                alert('Access forbidden. Refreshing page in 3 seconds...');
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+                return Promise.reject('Access forbidden');
+            }
+            if (!response.ok) {
+                return Promise.reject('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(handleStatusResponse)
         .catch(error => {
             console.error('Error fetching status:', error);
@@ -59,5 +95,5 @@ const parseUptimeString = (uptimeString) => {
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchStatus();
-    setInterval(fetchStatus, 10000);
+    statusInterval = setInterval(fetchStatus, 10000);
 });
