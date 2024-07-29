@@ -1,4 +1,6 @@
-let serverStartTime, lastUpdateTime, uptimeInterval;
+let serverStartTime;
+let lastUpdateTime;
+let uptimeInterval;
 
 const formatUptime = (milliseconds) => {
     const seconds = Math.floor(milliseconds / 1000);
@@ -24,8 +26,7 @@ const handleStatusResponse = (data) => {
         uptimeInterval = setInterval(updateUptime, 1000);
     } else {
         const expectedUptime = now - serverStartTime;
-        const diff = Math.abs(serverUptime - expectedUptime);
-        if (diff > 2000) {
+        if (Math.abs(serverUptime - expectedUptime) > 2000) {
             serverStartTime = now - serverUptime;
         }
     }
