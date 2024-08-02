@@ -99,16 +99,19 @@ class InviteBlocklist(commands.Cog):
     async def check_immunity_list(self, message: discord.Message) -> bool:
         if not message.guild or await self.bot.is_owner(message.author):
             return True
-        global_perms = await self.bot.allowed_by_whitelist_blacklist(message.author)
-        if not global_perms:
-            return global_perms
-        if message.author.guild_permissions.administrator:
+
+        mod_role_id = await self.config.guild(message.guild).mod_role()
+        mod_role = discord.utils.get(message.guild.roles, id=mod_role_id)
+
+        permissions = getattr(message.author, 'guild_permissions', None)
+        if permissions and (
+            permissions.administrator or
+            permissions.manage_guild or
+            permissions.manage_channels or
+            (mod_role and mod_role in message.author.roles)
+        ):
             return True
-        if any([
-            message.author.guild_permissions.manage_guild,
-            message.author.guild_permissions.manage_channels
-        ]):
-            return True
+
         immunity_list = await self.config.guild(message.guild).immunity_list()
         channel = message.channel
         return any([
