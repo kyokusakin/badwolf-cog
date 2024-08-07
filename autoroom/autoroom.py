@@ -2,7 +2,7 @@
 
 from abc import ABC
 from contextlib import suppress
-from typing import Any, ClassVar, Dict, Union, List
+from typing import Any, ClassVar
 
 import discord
 from redbot.core import Config, commands
@@ -38,11 +38,11 @@ class AutoRoom(
     check out [the readme](https://github.com/PhasecoreX/PCXCogs/tree/master/autoroom/README.md)
     """
 
-    __author__ = "PhasecoreX, Badwolf_TW"
-    __version__ = "3.7.3"
+    __author__ = "PhasecoreX"
+    __version__ = "3.8.1"
 
     default_global_settings: ClassVar[dict[str, int]] = {"schema_version": 0}
-    default_guild_settings: ClassVar[dict[str, Union[bool, int, List[int]]]] = {
+    default_guild_settings: ClassVar[dict[str, bool | list[int]]] = {
         "admin_access": True,
         "mod_access": False,
         "bot_access": [],
@@ -56,6 +56,8 @@ class AutoRoom(
         "text_channel_topic": "",
         "channel_name_type": "username",
         "channel_name_format": "",
+        "perm_owner_manage_channels": True,
+        "perm_send_messages": True,
     }
     default_channel_settings: ClassVar[dict[str, int | None]] = {
         "source_channel": None,
@@ -64,34 +66,17 @@ class AutoRoom(
     }
     extra_channel_name_change_delay = 4
 
-    perms_public: ClassVar[dict[str, bool]] = {
-        "view_channel": True,
-        "connect": True,
-        "send_messages": True,
-    }
-    perms_locked: ClassVar[dict[str, bool]] = {
-        "view_channel": True,
-        "connect": False,
-        "send_messages": False,
-    }
-    perms_private: ClassVar[dict[str, bool]] = {
-        "view_channel": False,
-        "connect": False,
-        "send_messages": False,
-    }
-
     perms_bot_source: ClassVar[dict[str, bool]] = {
         "view_channel": True,
         "connect": True,
         "move_members": True,
     }
-    perms_autoroom_owner: ClassVar[dict[str, bool]] = {
-        **perms_public,
+    perms_bot_dest: ClassVar[dict[str, bool]] = {
+        "view_channel": True,
+        "connect": True,
+        "send_messages": True,
         "manage_channels": True,
         "manage_messages": True,
-    }
-    perms_bot_dest: ClassVar[dict[str, bool]] = {
-        **perms_autoroom_owner,
         "move_members": True,
     }
 
@@ -294,7 +279,7 @@ class AutoRoom(
         """Remove non-existent AutoRooms from the config."""
         await self.bot.wait_until_ready()
         voice_channel_dict = await self.config.all_channels()
-        for voice_channel_id in voice_channel_dict:
+        for voice_channel_id, voice_channel_settings in voice_channel_dict.items():
             voice_channel = self.bot.get_channel(voice_channel_id)
             if voice_channel:
                 if isinstance(voice_channel, discord.VoiceChannel):
@@ -303,7 +288,7 @@ class AutoRoom(
             else:
                 # AutoRoom has already been deleted, clean up legacy text channel if it still exists
                 legacy_text_channel = await self.get_autoroom_legacy_text_channel(
-                    voice_channel
+                    voice_channel_settings["associated_text_channel"]
                 )
                 if legacy_text_channel:
                     await legacy_text_channel.delete(
@@ -456,27 +441,20 @@ class AutoRoom(
             perms.overwrite(target, permissions)
             if member_roles and target in member_roles:
                 # If we have member roles and this target is one, apply AutoRoom type permissions
-                if autoroom_source_config["room_type"] == "private":
-                    perms.update(target, self.perms_private)
-                elif autoroom_source_config["room_type"] == "locked":
-                    perms.update(target, self.perms_locked)
-                else:
-                    perms.update(target, self.perms_public)
+                perms.update(target, autoroom_source_config["perms"]["access"])
 
         # Update overwrites for default role to account for AutoRoom type
-        if member_roles or autoroom_source_config["room_type"] == "private":
-            perms.update(guild.default_role, self.perms_private)
-        elif autoroom_source_config["room_type"] == "locked":
-            perms.update(guild.default_role, self.perms_locked)
+        if member_roles:
+            perms.update(guild.default_role, autoroom_source_config["perms"]["deny"])
         else:
-            perms.update(guild.default_role, self.perms_public)
+            perms.update(guild.default_role, autoroom_source_config["perms"]["access"])
 
         # Bot overwrites
         perms.update(guild.me, self.perms_bot_dest)
 
         # AutoRoom Owner overwrites
         if autoroom_source_config["room_type"] != "server":
-            perms.update(member, self.perms_autoroom_owner)
+            perms.update(member, autoroom_source_config["perms"]["owner"])
 
         # Admin/moderator/bot overwrites
         # Add bot roles to be allowed
@@ -489,7 +467,7 @@ class AutoRoom(
             additional_allowed_roles += await self.bot.get_admin_roles(guild)
         for role in additional_allowed_roles:
             # Add all the mod/admin roles, if required
-            perms.update(role, self.perms_public)
+            perms.update(role, autoroom_source_config["perms"]["allow"])
 
         # Create new AutoRoom
         new_voice_channel = await guild.create_voice_channel(
@@ -506,7 +484,6 @@ class AutoRoom(
         if autoroom_source_config["room_type"] != "server":
             await self.config.channel(new_voice_channel).owner.set(member.id)
         try:
-            await asyncio.sleep(0.2)
             await member.move_to(
                 new_voice_channel, reason="AutoRoom: Move user to new AutoRoom."
             )
@@ -845,16 +822,41 @@ class AutoRoom(
         return result
 
     async def get_autoroom_source_config(
-        self, autoroom_source: discord.VoiceChannel
+        self, autoroom_source: discord.VoiceChannel | discord.abc.GuildChannel | None
     ) -> dict[str, Any] | None:
         """Return the config for an autoroom source, or None if not set up yet."""
         if not autoroom_source:
+            return None
+        if not isinstance(autoroom_source, discord.VoiceChannel):
             return None
         config = await self.config.custom(
             "AUTOROOM_SOURCE", str(autoroom_source.guild.id), str(autoroom_source.id)
         ).all()  # Returns default values
         if not config["dest_category_id"]:
             return None
+
+        perms = {
+            "allow": {
+                "view_channel": True,
+                "connect": True,
+                "send_messages": config["perm_send_messages"],
+            },
+            "lock": {"view_channel": True, "connect": False, "send_messages": False},
+            "deny": {"view_channel": False, "connect": False, "send_messages": False},
+        }
+        perms["owner"] = {
+            **perms["allow"],
+            "manage_channels": True if config["perm_owner_manage_channels"] else None,
+            "manage_messages": True,
+        }
+        if config["room_type"] == "private":
+            perms["access"] = perms["deny"]
+        elif config["room_type"] == "locked":
+            perms["access"] = perms["lock"]
+        else:
+            perms["access"] = perms["allow"]
+
+        config["perms"] = perms
         return config
 
     async def get_autoroom_info(
@@ -868,14 +870,18 @@ class AutoRoom(
         return await self.config.channel(autoroom).all()
 
     async def get_autoroom_legacy_text_channel(
-        self, autoroom: discord.VoiceChannel
+        self, autoroom: discord.VoiceChannel | int | None
     ) -> discord.TextChannel | None:
         """Get the AutoRoom legacy test channel, if it exists and we have manage channels permission."""
-        legacy_text_channel_id = await self.config.channel(
+        if isinstance(autoroom, discord.VoiceChannel):
+            autoroom = autoroom.id
+        if not autoroom:
+            return None
+        legacy_text_channel_id = await self.config.channel_from_id(
             autoroom
         ).associated_text_channel()
         legacy_text_channel = (
-            autoroom.guild.get_channel(legacy_text_channel_id)
+            self.bot.get_channel(legacy_text_channel_id)
             if legacy_text_channel_id
             else None
         )
